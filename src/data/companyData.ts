@@ -2,6 +2,21 @@
 import { Company, CategoryKey } from "../types";
 import { v4 as uuidv4 } from 'uuid';
 
+// Helper function to generate deterministic UUID from string
+const generateDeterministicUUID = (input: string): string => {
+  // Simple hash function to generate consistent UUID-like string
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    const char = input.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // Convert hash to a UUID-like string
+  const hashStr = Math.abs(hash).toString(16).padStart(8, '0');
+  return `${hashStr}-${hashStr.slice(0, 4)}-${hashStr.slice(4, 8)}-${hashStr.slice(0, 4)}-${hashStr}${hashStr.slice(0, 4)}`;
+};
+
 // Helper function to generate random scores
 const randomScore = (min = 30, max = 100): number => {
   return parseFloat((Math.random() * (max - min) + min).toFixed(1));
@@ -102,7 +117,7 @@ export const generateCompanies = (count = 20): Company[] => {
     const baseScore = randomScore(50, 90);
     
     return {
-      id: uuidv4(),
+      id: generateDeterministicUUID(companyNames[index % companyNames.length]),
       name: companyNames[index % companyNames.length],
       macroScore: baseScore,
       lastUpdated: new Date().toISOString().split('T')[0],

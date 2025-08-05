@@ -35,6 +35,16 @@ router.get('/investor/:email', async (req, res) => {
   }
 });
 
+// Clear all access requests (for testing)
+router.delete('/clear', async (req, res) => {
+  try {
+    await AccessRequest.deleteMany({});
+    res.json({ message: 'All access requests cleared' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Approve or deny a request (by Super Admin)
 router.patch('/:id', async (req, res) => {
   try {

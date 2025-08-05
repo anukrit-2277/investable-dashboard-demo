@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { useUser } from '../context/UserContext';
 import { Button } from './ui/button';
+import { Lock, Eye, EyeOff, BarChart3 } from 'lucide-react';
 
 interface CompanyCardProps {
   company: Company;
@@ -15,46 +16,149 @@ interface CompanyCardProps {
 const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
   const navigate = useNavigate();
   const lastUpdatedDate = new Date(company.lastUpdated);
-  const { userType, email, name } = useUser();
+  const { userType, email, name, isLoading } = useUser();
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
   const [accessStatus, setAccessStatus] = useState<'pending' | 'approved' | 'denied' | null>(null);
-  const [refreshStatus, setRefreshStatus] = useState(0);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
 
-  // Check access status for investor
-  React.useEffect(() => {
-    const fetchStatus = async () => {
-      if (userType === 'investor' && email) {
-        try {
-          const res = await fetch(`http://localhost:5050/api/access-requests/investor/${email}`);
-          const data = await res.json();
-          console.log('[AccessRequest Debug] API data:', data, 'company.id:', company.id);
-          if (Array.isArray(data)) {
-            const req = data.find((r: { companyId: string; status: 'pending' | 'approved' | 'denied' }) => r.companyId === company.id);
-            console.log('[AccessRequest Debug] Matched request:', req);
-            if (req) {
-              setAccessStatus(req.status);
-            } else {
-              console.warn('[AccessRequest Debug] No matching request found for company.id:', company.id);
-              setAccessStatus(null);
-            }
-          } else {
-            console.error('[AccessRequest Debug] Unexpected API response format:', data);
-            setAccessStatus(null);
-          }
-        } catch (err) {
-          console.error('[AccessRequest Debug] Error fetching status:', err);
-          setAccessStatus(null);
+
+
+  // Function to get cache key for this company's access status
+  const getCacheKey = React.useCallback(() => {
+    if (!email || !company.id) {
+      return null;
+    }
+    return `access_status_${email}_${company.id}`;
+  }, [email, company.id]);
+
+  // Function to get cached access status
+  const getCachedStatus = React.useCallback(() => {
+    const cacheKey = getCacheKey();
+    if (!cacheKey) return null;
+    
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { status, timestamp } = JSON.parse(cached);
+        // Cache is valid for 5 minutes
+        if (Date.now() - timestamp < 5 * 60 * 1000) {
+          return status;
+        } else {
+          localStorage.removeItem(cacheKey);
         }
+      }
+    } catch (error) {
+      console.error('Error reading cached access status:', error);
+    }
+    return null;
+  }, [getCacheKey]);
+
+  // Function to cache access status
+  const cacheStatus = React.useCallback((status: 'pending' | 'approved' | 'denied' | null) => {
+    const cacheKey = getCacheKey();
+    if (!cacheKey) {
+      return;
+    }
+    
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({
+        status,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.error('Error caching access status:', error);
+    }
+  }, [getCacheKey]);
+
+  // Function to fetch access status
+  const fetchAccessStatus = React.useCallback(async () => {
+    if (userType === 'investor' && email && company.id) {
+      setIsLoadingStatus(true);
+      try {
+        const res = await fetch(`http://localhost:5050/api/access-requests/investor/${email}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+                 const data = await res.json();
+         
+         if (Array.isArray(data)) {
+           const req = data.find((r: { companyId: string; status: 'pending' | 'approved' | 'denied' }) => r.companyId === company.id);
+           if (req) {
+             setAccessStatus(req.status);
+             cacheStatus(req.status);
+           } else {
+             setAccessStatus(null);
+             cacheStatus(null);
+           }
+         } else {
+           console.error('Unexpected API response format:', data);
+           setAccessStatus(null);
+           cacheStatus(null);
+         }
+             } catch (err) {
+         console.error('Error fetching status:', err);
+         setAccessStatus(null);
+         cacheStatus(null);
+       } finally {
+         setIsLoadingStatus(false);
+       }
+     } else if (userType !== 'investor') {
+       // Reset status for non-investors
+       setAccessStatus(null);
+       setIsLoadingStatus(false);
+     }
+  }, [userType, email, company.id, cacheStatus]);
+
+  // Check access status for investor - wait for user data to be loaded
+  React.useEffect(() => {
+    // Only fetch if user data is loaded and we have all required data
+    if (!isLoading && userType === 'investor' && email && company.id) {
+      // First check cache
+      const cachedStatus = getCachedStatus();
+      if (cachedStatus !== null) {
+        setAccessStatus(cachedStatus);
       } else {
-        setAccessStatus(null);
+        fetchAccessStatus();
+      }
+    } else if (!isLoading && userType !== 'investor') {
+      setAccessStatus(null);
+    }
+  }, [isLoading, userType, email, company.id, fetchAccessStatus, getCachedStatus]);
+
+  // Add focus event listener to refresh status when window regains focus
+  React.useEffect(() => {
+    const handleFocus = () => {
+      if (!isLoading && userType === 'investor' && email && company.id) {
+        // Refetch status when window regains focus
+        fetchAccessStatus();
       }
     };
-    fetchStatus();
-  }, [userType, email, company.id, refreshStatus]);
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isLoading, userType, email, company.id, fetchAccessStatus]);
+
+  // Add periodic refresh for pending requests
+  React.useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
+    if (!isLoading && userType === 'investor' && email && company.id && accessStatus === 'pending') {
+      // Check for status updates every 30 seconds for pending requests
+      intervalId = setInterval(() => {
+        fetchAccessStatus();
+      }, 30000); // 30 seconds
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isLoading, userType, email, company.id, accessStatus, fetchAccessStatus]);
 
   const handleClick = () => {
     if (userType === 'investor') {
@@ -82,11 +186,13 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Request failed');
       setSuccess('Request sent!');
+      // Update the local state immediately
+      setAccessStatus('pending');
+      cacheStatus('pending');
       setTimeout(() => {
         setShowModal(false);
         setSuccess('');
         setError('');
-        setRefreshStatus(r => r + 1);
       }, 1000);
     } catch (err) {
       if (err instanceof Error) setError(err.message);
@@ -96,46 +202,123 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
     }
   };
 
+  // Check if content should be blurred (investor without approved access)
+  const shouldBlur = userType === 'investor' && accessStatus !== 'approved';
+
   return (
-    <Card
-      className="overflow-hidden hover:shadow-md transition-shadow duration-300 cursor-pointer animate-fade-in"
-      onClick={handleClick}
-    >
-      <CardHeader className="pb-2">
+    <>
+      <Card
+        className={`overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer animate-scale-in hover-lift relative`}
+        onClick={handleClick}
+      >
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 opacity-50"></div>
+      
+      <CardHeader className="pb-2 relative z-10">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-lg">{company.name}</h3>
-            <p className="text-xs text-muted-foreground">
-              Last updated {formatDistanceToNow(lastUpdatedDate, { addSuffix: true })}
+          <div className="flex-1">
+            <h3 className="font-bold text-lg text-gray-900 mb-1">{company.name}</h3>
+            <p className="text-xs text-gray-600 flex items-center">
+              <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+              Updated {formatDistanceToNow(lastUpdatedDate, { addSuffix: true })}
+              {shouldBlur && (
+                <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                  🔒 Restricted
+                </span>
+              )}
             </p>
           </div>
-          <ScoreRing score={company.macroScore} size={60} />
+          <div className="relative">
+            <div className={shouldBlur ? 'blur-content' : ''}>
+              <ScoreRing score={company.macroScore} size={60} />
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <span className="text-xs text-white font-bold">{Math.round(company.macroScore)}</span>
+              </div>
+            </div>
+            {shouldBlur && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-white/80 rounded-full p-2">
+                  <Lock className="w-4 h-4 text-gray-400" />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Score breakdown</p>
-            <HeatmapSnippet company={company} />
+      
+      <CardContent className="relative z-10">
+        <div className="space-y-4">
+          <div className="relative">
+            <p className="text-xs font-medium text-gray-700 mb-2 flex items-center">
+              <BarChart3 className="w-3 h-3 mr-1" />
+              Score Breakdown
+            </p>
+            <div className="bg-white/50 rounded-lg p-3 backdrop-blur-sm relative">
+              {/* Blur overlay for sensitive data */}
+              {shouldBlur && (
+                <>
+                  <div className="blur-content">
+                    <HeatmapSnippet company={company} />
+                  </div>
+                  <div className="blur-overlay">
+                    <div className="text-center p-4">
+                      <Lock className="w-6 h-6 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-gray-600">Access Required</p>
+                      <p className="text-xs text-gray-500">Request access to view scores</p>
+                    </div>
+                  </div>
+                </>
+              )}
+              {!shouldBlur && <HeatmapSnippet company={company} />}
+            </div>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-primary font-medium">View details →</span>
+          
+          <div className="flex justify-between items-center pt-2">
+            <span className="text-xs font-medium text-blue-600 flex items-center">
+              <Eye className="w-3 h-3 mr-1" />
+              View details →
+            </span>
+            
             {userType === 'investor' && (
               <>
-                {accessStatus === 'approved' ? (
-                  <span className="text-green-600 text-xs font-medium">Access Approved</span>
+                {isLoading || isLoadingStatus ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-xs text-gray-500">Loading...</span>
+                  </div>
+                ) : accessStatus === 'approved' ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                      ✓ Access Approved
+                    </span>
+                    
+                  </div>
                 ) : accessStatus === 'pending' ? (
-                  <span className="text-yellow-600 text-xs font-medium">Request Pending</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full">
+                      ⏳ Request Pending
+                    </span>
+                    
+                  </div>
                 ) : accessStatus === 'denied' ? (
-                  <span className="text-red-600 text-xs font-medium">Request Denied</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                      ✗ Request Denied
+                    </span>
+                    
+                  </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={e => { e.stopPropagation(); setShowModal(true); }}
-                  >
-                    Request Access
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={e => { e.stopPropagation(); setShowModal(true); }}
+                      className="text-xs bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 hover:from-blue-600 hover:to-purple-600"
+                    >
+                      Request Access
+                    </Button>
+                    
+                  </div>
                 )}
               </>
             )}
@@ -143,63 +326,132 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
         </div>
       </CardContent>
 
+      </Card>
+      
+      {/* Modal - Moved outside card for better positioning */}
       {showModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
           onClick={e => e.stopPropagation()}
         >
-          <div className="bg-white p-6 rounded shadow-md w-full max-w-sm relative">
-            <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
-              onClick={e => {
-                e.stopPropagation();
-                setShowModal(false);
-                setSuccess('');
-                setError('');
-                setRefreshStatus(r => r + 1);
-              }}
-              type="button"
-            >
-              &times;
-            </button>
-            <h3 className="text-lg font-bold mb-4">Request Access</h3>
-            {accessStatus === 'approved' ? (
-              <div className="text-green-600 text-center font-medium py-6">Access Approved</div>
-            ) : accessStatus === 'pending' ? (
-              <div className="text-yellow-600 text-center font-medium py-6">Request Pending</div>
-            ) : accessStatus === 'denied' ? (
-              <div className="text-red-600 text-center font-medium py-6">Request Denied</div>
-            ) : (
-              <form
-                onSubmit={async e => {
-                  e.stopPropagation();
-                  await handleRequest(e);
-                  setRefreshStatus(r => r + 1);
-                }}
-              >
-                <div className="mb-3">
-                  <label className="block text-sm font-medium mb-1">Your Name</label>
-                  <input type="text" className="w-full border rounded px-3 py-2" value={name} disabled />
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-scale-in max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Request Access</h3>
+                <button
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  onClick={e => {
+                    e.stopPropagation();
+                    setShowModal(false);
+                    setSuccess('');
+                    setError('');
+                  }}
+                  type="button"
+                >
+                  <span className="sr-only">Close</span>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {accessStatus === 'approved' ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-green-600 mb-2">Access Approved</h4>
+                  <p className="text-gray-600">You can now view detailed company information.</p>
                 </div>
-                <div className="mb-3">
-                  <label className="block text-sm font-medium mb-1">Your Email</label>
-                  <input type="email" className="w-full border rounded px-3 py-2" value={email} disabled />
+              ) : accessStatus === 'pending' ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-yellow-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-yellow-600 mb-2">Request Pending</h4>
+                  <p className="text-gray-600">Your request is being reviewed by the admin.</p>
                 </div>
-                <div className="mb-3">
-                  <label className="block text-sm font-medium mb-1">Company</label>
-                  <input type="text" className="w-full border rounded px-3 py-2" value={company.name} disabled />
+              ) : accessStatus === 'denied' ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-red-600 mb-2">Request Denied</h4>
+                  <p className="text-gray-600">Your access request has been denied.</p>
                 </div>
-                {error && <div className="text-red-500 mb-2">{error}</div>}
-                {success && <div className="text-green-600 mb-2">{success}</div>}
-                <Button type="submit" className="w-full" disabled={loading || !!success}>
-                  {loading ? 'Requesting...' : success ? 'Requested' : 'Submit Request'}
-                </Button>
-              </form>
-            )}
+              ) : (
+                <form onSubmit={handleRequest} className="space-y-4">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" 
+                        value={name} 
+                        disabled 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Email</label>
+                      <input 
+                        type="email" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" 
+                        value={email} 
+                        disabled 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" 
+                        value={company.name} 
+                        disabled 
+                      />
+                    </div>
+                  </div>
+                  
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-red-600 text-sm">{error}</p>
+                    </div>
+                  )}
+                  
+                  {success && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <p className="text-green-600 text-sm">{success}</p>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium py-2 rounded-lg transition-all duration-200" 
+                    disabled={loading || !!success}
+                  >
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Requesting...
+                      </div>
+                    ) : success ? (
+                      'Requested ✓'
+                    ) : (
+                      'Submit Request'
+                    )}
+                  </Button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       )}
-    </Card>
+    </>
   );
 };
 
