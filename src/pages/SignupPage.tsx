@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User, ArrowRight, Building2, UserCheck } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 const USER_TYPES = [
   { label: 'Investor', value: 'investor', icon: UserCheck, description: 'Access company data and analysis' },
@@ -31,7 +32,7 @@ export default function SignupPage() {
     }
     
     try {
-      const res = await fetch('http://localhost:5050/api/auth/signup', {
+      const res = await fetch(API_ENDPOINTS.SIGNUP, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, userType })
@@ -50,11 +51,11 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-950 to-indigo-950 p-4">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full opacity-10 animate-float"></div>
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-gradient-to-br from-orange-400 to-red-400 rounded-full opacity-10 animate-float" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full opacity-10 animate-float"></div>
+        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-gradient-to-br from-orange-600 to-red-600 rounded-full opacity-10 animate-float" style={{ animationDelay: '1s' }}></div>
       </div>
 
       <div className="relative w-full max-w-md">
@@ -63,21 +64,21 @@ export default function SignupPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl mb-4 shadow-lg">
             <User className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join Investable</h1>
-          <p className="text-gray-600">Create your account to get started</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Join Investable</h1>
+          <p className="text-gray-300">Create your account to get started</p>
         </div>
 
         {/* Signup Form */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 animate-scale-in">
+        <div className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-xl border border-border/20 p-8 animate-scale-in">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name Field */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Full Name</label>
+              <label className="block text-sm font-medium text-foreground">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                  className="w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-muted/50 backdrop-blur-sm text-foreground placeholder:text-muted-foreground"
                   placeholder="Enter your full name"
                   value={name}
                   onChange={e => setName(e.target.value)}
@@ -88,12 +89,12 @@ export default function SignupPage() {
 
             {/* Email Field */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Email Address</label>
+              <label className="block text-sm font-medium text-foreground">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="email"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                  className="w-full pl-10 pr-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-muted/50 backdrop-blur-sm text-foreground placeholder:text-muted-foreground"
                   placeholder="Enter your email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -104,12 +105,12 @@ export default function SignupPage() {
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-sm font-medium text-foreground">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                  className="w-full pl-10 pr-12 py-3 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-muted/50 backdrop-blur-sm text-foreground placeholder:text-muted-foreground"
                   placeholder="Create a strong password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -117,7 +118,7 @@ export default function SignupPage() {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -127,7 +128,7 @@ export default function SignupPage() {
 
             {/* User Type Selection */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">Account Type</label>
+              <label className="block text-sm font-medium text-foreground">Account Type</label>
               <div className="grid grid-cols-1 gap-3">
                 {USER_TYPES.map((type) => {
                   const IconComponent = type.icon;
@@ -138,25 +139,25 @@ export default function SignupPage() {
                       onClick={() => setUserType(type.value)}
                       className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
                         userType === type.value
-                          ? 'border-purple-500 bg-purple-50 shadow-md'
-                          : 'border-gray-200 bg-white/50 hover:border-gray-300'
+                          ? 'border-primary bg-primary/10 shadow-md'
+                          : 'border-border bg-muted/50 hover:border-border/60'
                       }`}
                     >
                       <div className="flex items-center space-x-3">
                         <div className={`p-2 rounded-lg ${
-                          userType === type.value ? 'bg-purple-100' : 'bg-gray-100'
+                          userType === type.value ? 'bg-primary/20' : 'bg-muted'
                         }`}>
                           <IconComponent className={`w-5 h-5 ${
-                            userType === type.value ? 'text-purple-600' : 'text-gray-500'
+                            userType === type.value ? 'text-primary' : 'text-muted-foreground'
                           }`} />
                         </div>
                         <div>
                           <div className={`font-medium ${
-                            userType === type.value ? 'text-purple-900' : 'text-gray-900'
+                            userType === type.value ? 'text-primary' : 'text-foreground'
                           }`}>
                             {type.label}
                           </div>
-                          <div className="text-sm text-gray-500">{type.description}</div>
+                          <div className="text-sm text-muted-foreground">{type.description}</div>
                         </div>
                       </div>
                     </button>
@@ -167,15 +168,15 @@ export default function SignupPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 animate-slide-in-left">
-                <p className="text-red-600 text-sm font-medium">{error}</p>
+              <div className="bg-red-950/20 border border-red-800/30 rounded-xl p-4 animate-slide-in-left">
+                <p className="text-red-400 text-sm font-medium">{error}</p>
               </div>
             )}
 
             {/* Success Message */}
             {success && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 animate-slide-in-left">
-                <p className="text-green-600 text-sm font-medium">{success}</p>
+              <div className="bg-green-950/20 border border-green-800/30 rounded-xl p-4 animate-slide-in-left">
+                <p className="text-green-400 text-sm font-medium">{success}</p>
               </div>
             )}
 
@@ -205,11 +206,11 @@ export default function SignupPage() {
 
           {/* Login Link */}
           <div className="mt-8 text-center">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Already have an account?{' '}
               <button
                 onClick={() => navigate('/auth')}
-                className="text-purple-600 hover:text-purple-700 font-semibold transition-colors duration-200 hover:underline"
+                className="text-primary hover:text-primary/80 font-semibold transition-colors duration-200 hover:underline"
               >
                 Sign in here
               </button>
@@ -219,11 +220,11 @@ export default function SignupPage() {
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             By creating an account, you agree to our{' '}
-            <a href="#" className="text-purple-600 hover:underline">Terms of Service</a>
+            <a href="#" className="text-primary hover:underline">Terms of Service</a>
             {' '}and{' '}
-            <a href="#" className="text-purple-600 hover:underline">Privacy Policy</a>
+            <a href="#" className="text-primary hover:underline">Privacy Policy</a>
           </p>
         </div>
       </div>

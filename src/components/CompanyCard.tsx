@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useUser } from '../context/UserContext';
 import { Button } from './ui/button';
 import { Lock, Eye, EyeOff, BarChart3 } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface CompanyCardProps {
   company: Company;
@@ -79,7 +80,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
     if (userType === 'investor' && email && company.id) {
       setIsLoadingStatus(true);
       try {
-        const res = await fetch(`http://localhost:5050/api/access-requests/investor/${email}`);
+        const res = await fetch(API_ENDPOINTS.ACCESS_REQUESTS_BY_INVESTOR(email));
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -178,7 +179,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
     setError('');
     setSuccess('');
     try {
-      const res = await fetch('http://localhost:5050/api/access-requests', {
+      const res = await fetch(API_ENDPOINTS.ACCESS_REQUESTS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ companyId: company.id, investorEmail: email, investorName: name })
@@ -212,17 +213,17 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
         onClick={handleClick}
       >
       {/* Gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 opacity-50"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-950/20 to-indigo-950/20 opacity-50"></div>
       
       <CardHeader className="pb-2 relative z-10">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <h3 className="font-bold text-lg text-gray-900 mb-1">{company.name}</h3>
-            <p className="text-xs text-gray-600 flex items-center">
+            <h3 className="font-bold text-lg text-foreground mb-1">{company.name}</h3>
+            <p className="text-xs text-muted-foreground flex items-center">
               <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
               Updated {formatDistanceToNow(lastUpdatedDate, { addSuffix: true })}
               {shouldBlur && (
-                <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                <span className="ml-2 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
                   🔒 Restricted
                 </span>
               )}
@@ -237,8 +238,8 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
             </div>
             {shouldBlur && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-white/80 rounded-full p-2">
-                  <Lock className="w-4 h-4 text-gray-400" />
+                <div className="bg-card/80 rounded-full p-2">
+                  <Lock className="w-4 h-4 text-muted-foreground" />
                 </div>
               </div>
             )}
@@ -249,11 +250,11 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
       <CardContent className="relative z-10">
         <div className="space-y-4">
           <div className="relative">
-            <p className="text-xs font-medium text-gray-700 mb-2 flex items-center">
+            <p className="text-xs font-medium text-foreground mb-2 flex items-center">
               <BarChart3 className="w-3 h-3 mr-1" />
               Score Breakdown
             </p>
-            <div className="bg-white/50 rounded-lg p-3 backdrop-blur-sm relative">
+            <div className="bg-card/50 rounded-lg p-3 backdrop-blur-sm relative">
               {/* Blur overlay for sensitive data */}
               {shouldBlur && (
                 <>
@@ -262,9 +263,9 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
                   </div>
                   <div className="blur-overlay">
                     <div className="text-center p-4">
-                      <Lock className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm font-medium text-gray-600">Access Required</p>
-                      <p className="text-xs text-gray-500">Request access to view scores</p>
+                      <Lock className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm font-medium text-foreground">Access Required</p>
+                      <p className="text-xs text-muted-foreground">Request access to view scores</p>
                     </div>
                   </div>
                 </>
@@ -274,7 +275,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
           </div>
           
           <div className="flex justify-between items-center pt-2">
-            <span className="text-xs font-medium text-blue-600 flex items-center">
+            <span className="text-xs font-medium text-primary flex items-center">
               <Eye className="w-3 h-3 mr-1" />
               View details →
             </span>
@@ -283,26 +284,26 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
               <>
                 {isLoading || isLoadingStatus ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-xs text-gray-500">Loading...</span>
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-xs text-muted-foreground">Loading...</span>
                   </div>
                 ) : accessStatus === 'approved' ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                    <span className="text-xs font-medium text-green-600 bg-green-950/20 px-2 py-1 rounded-full">
                       ✓ Access Approved
                     </span>
                     
                   </div>
                 ) : accessStatus === 'pending' ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full">
+                    <span className="text-xs font-medium text-yellow-600 bg-yellow-950/20 px-2 py-1 rounded-full">
                       ⏳ Request Pending
                     </span>
                     
                   </div>
                 ) : accessStatus === 'denied' ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                    <span className="text-xs font-medium text-red-600 bg-red-950/20 px-2 py-1 rounded-full">
                       ✗ Request Denied
                     </span>
                     
@@ -334,12 +335,12 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
           onClick={e => e.stopPropagation()}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-scale-in max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-scale-in max-h-[90vh] overflow-y-auto border border-border">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Request Access</h3>
+                <h3 className="text-xl font-bold text-foreground">Request Access</h3>
                 <button
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
                   onClick={e => {
                     e.stopPropagation();
                     setShowModal(false);
@@ -357,60 +358,60 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
               
               {accessStatus === 'approved' ? (
                 <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-green-950/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                   <h4 className="text-lg font-semibold text-green-600 mb-2">Access Approved</h4>
-                  <p className="text-gray-600">You can now view detailed company information.</p>
+                  <p className="text-muted-foreground">You can now view detailed company information.</p>
                 </div>
-              ) : accessStatus === 'pending' ? (
+                              ) : accessStatus === 'pending' ? (
                 <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-yellow-950/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-yellow-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <h4 className="text-lg font-semibold text-yellow-600 mb-2">Request Pending</h4>
-                  <p className="text-gray-600">Your request is being reviewed by the admin.</p>
+                  <p className="text-muted-foreground">Your request is being reviewed by the admin.</p>
                 </div>
-              ) : accessStatus === 'denied' ? (
+                              ) : accessStatus === 'denied' ? (
                 <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-red-950/20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </div>
                   <h4 className="text-lg font-semibold text-red-600 mb-2">Request Denied</h4>
-                  <p className="text-gray-600">Your access request has been denied.</p>
+                  <p className="text-muted-foreground">Your access request has been denied.</p>
                 </div>
               ) : (
                 <form onSubmit={handleRequest} className="space-y-4">
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Your Name</label>
                       <input 
                         type="text" 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" 
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground" 
                         value={name} 
                         disabled 
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Email</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Your Email</label>
                       <input 
                         type="email" 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" 
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground" 
                         value={email} 
                         disabled 
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Company</label>
                       <input 
                         type="text" 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" 
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground" 
                         value={company.name} 
                         disabled 
                       />
@@ -418,14 +419,14 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
                   </div>
                   
                   {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                      <p className="text-red-600 text-sm">{error}</p>
+                    <div className="bg-red-950/20 border border-red-800/30 rounded-lg p-3">
+                      <p className="text-red-400 text-sm">{error}</p>
                     </div>
                   )}
                   
                   {success && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                      <p className="text-green-600 text-sm">{success}</p>
+                    <div className="bg-green-950/20 border border-green-800/30 rounded-lg p-3">
+                      <p className="text-green-400 text-sm">{success}</p>
                     </div>
                   )}
                   

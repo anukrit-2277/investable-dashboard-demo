@@ -26,10 +26,10 @@ const Index = () => {
   }, [searchTerm]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700">
-        <div className="absolute inset-0 bg-black/10"></div>
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-800 via-purple-800 to-indigo-900">
+        <div className="absolute inset-0 bg-black/20"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10"></div>
         
         <div className="relative container max-w-7xl mx-auto px-4 py-16 sm:py-24">
@@ -83,8 +83,8 @@ const Index = () => {
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Company Directory</h2>
-            <p className="text-gray-600">Explore and analyze companies with our comprehensive scoring system</p>
+            <h2 className="text-3xl font-bold text-white mb-2">Company Directory</h2>
+            <p className="text-gray-300">Explore and analyze companies with our comprehensive scoring system</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" size="sm" className="hidden md:flex shadow-sm">
@@ -98,18 +98,18 @@ const Index = () => {
         </div>
         
         {/* Search and filter row */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+        <div className="bg-card rounded-xl shadow-sm border border-border p-6 mb-8">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search companies..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="pl-10"
               />
             </div>
-            <div className="text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+            <div className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-lg">
               Showing {filteredCompanies.length} companies
             </div>
           </div>
@@ -131,10 +131,10 @@ const Index = () => {
         {/* Empty state */}
         {filteredCompanies.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center max-w-md">
-              <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No companies found</h3>
-              <p className="text-gray-600">Try adjusting your search terms or filters</p>
+            <div className="bg-card rounded-xl shadow-sm border border-border p-12 text-center max-w-md">
+              <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">No companies found</h3>
+              <p className="text-muted-foreground">Try adjusting your search terms or filters</p>
             </div>
           </div>
         )}

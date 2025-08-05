@@ -14,6 +14,7 @@ import {
   Activity
 } from 'lucide-react';
 import UserProfile from '@/components/UserProfile';
+import { API_ENDPOINTS } from '../config/api';
 
 interface AccessRequest {
   _id: string;
@@ -33,7 +34,7 @@ export default function AdminPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:5050/api/access-requests');
+      const res = await fetch(API_ENDPOINTS.ACCESS_REQUESTS);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch requests');
       setRequests(data);
@@ -51,7 +52,7 @@ export default function AdminPage() {
 
   const handleAction = async (id: string, status: 'approved' | 'denied') => {
     try {
-      const res = await fetch(`http://localhost:5050/api/access-requests/${id}`, {
+      const res = await fetch(API_ENDPOINTS.ACCESS_REQUEST_BY_ID(id), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -80,11 +81,11 @@ export default function AdminPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>;
+        return <Badge variant="secondary" className="bg-yellow-950/20 text-yellow-400 hover:bg-yellow-950/30">Pending</Badge>;
       case 'approved':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">Approved</Badge>;
+        return <Badge variant="secondary" className="bg-green-950/20 text-green-400 hover:bg-green-950/30">Approved</Badge>;
       case 'denied':
-        return <Badge variant="secondary" className="bg-red-100 text-red-800 hover:bg-red-100">Denied</Badge>;
+        return <Badge variant="secondary" className="bg-red-950/20 text-red-400 hover:bg-red-950/30">Denied</Badge>;
       default:
         return <Badge variant="secondary">Unknown</Badge>;
     }
@@ -98,14 +99,14 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-card border-b border-border">
         <div className="container max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600">Manage access requests and system overview</p>
+              <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
+              <p className="text-muted-foreground">Manage access requests and system overview</p>
             </div>
             <UserProfile />
           </div>
@@ -181,14 +182,14 @@ export default function AdminPage() {
               </div>
             ) : requests.length === 0 ? (
               <div className="text-center py-12">
-                <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No access requests found.</p>
+                <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No access requests found.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {requests.map((req, index) => (
                   <div key={req._id}>
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 bg-muted rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <div className="flex items-center gap-2">
@@ -198,12 +199,12 @@ export default function AdminPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="font-medium text-gray-900">{req.investorName}</p>
-                            <p className="text-sm text-gray-600">{req.investorEmail}</p>
+                            <p className="font-medium text-foreground">{req.investorName}</p>
+                            <p className="text-sm text-muted-foreground">{req.investorEmail}</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-600">Company ID: <span className="font-mono">{req.companyId}</span></p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-muted-foreground">Company ID: <span className="font-mono">{req.companyId}</span></p>
+                            <p className="text-sm text-muted-foreground">
                               Requested: {new Date(req.createdAt).toLocaleDateString()} at {new Date(req.createdAt).toLocaleTimeString()}
                             </p>
                           </div>
