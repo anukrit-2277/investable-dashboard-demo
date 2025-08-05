@@ -8,6 +8,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import SignupPage from "./pages/SignupPage";
@@ -36,6 +37,11 @@ const App = () => (
               <Route path="/company/:id" element={
                 <ProtectedRoute>
                   <CompanyDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/company" element={
+                <ProtectedRoute allowedUserTypes={['company']}>
+                  <ComingSoon />
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={

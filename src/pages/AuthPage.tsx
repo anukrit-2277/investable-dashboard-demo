@@ -63,7 +63,11 @@ export default function AuthPage() {
             <Lock className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-gray-300">Sign in to your account to continue</p>
+          <p className="text-gray-300 mb-2">Sign in to your account to continue</p>
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+            <span className="text-xs">Powered by</span>
+            <span className="font-bold">Investable</span>
+          </div>
         </div>
 
         {/* Login Form */}
@@ -151,11 +155,14 @@ export default function AuthPage() {
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mb-2">
             By signing in, you agree to our{' '}
             <a href="#" className="text-primary hover:underline">Terms of Service</a>
             {' '}and{' '}
             <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            © 2024 Investable. Empowering investment readiness.
           </p>
         </div>
       </div>

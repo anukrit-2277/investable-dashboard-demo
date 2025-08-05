@@ -65,7 +65,11 @@ export default function SignupPage() {
             <User className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Join Investable</h1>
-          <p className="text-gray-300">Create your account to get started</p>
+          <p className="text-gray-300 mb-2">Create your account to get started</p>
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+            <span className="text-xs">Empowering</span>
+            <span className="font-bold">Investment Readiness</span>
+          </div>
         </div>
 
         {/* Signup Form */}
@@ -220,11 +224,14 @@ export default function SignupPage() {
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mb-2">
             By creating an account, you agree to our{' '}
             <a href="#" className="text-primary hover:underline">Terms of Service</a>
             {' '}and{' '}
             <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            © 2024 Investable. Empowering investment readiness.
           </p>
         </div>
       </div>
