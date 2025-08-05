@@ -26,7 +26,11 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<AuthPage />} />
+              <Route path="/" element={
+                <ProtectedRoute redirectTo="/auth">
+                  <Index />
+                </ProtectedRoute>
+              } />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/home" element={
@@ -40,7 +44,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/company" element={
-                <ProtectedRoute allowedUserTypes={['company']}>
+                <ProtectedRoute>
                   <ComingSoon />
                 </ProtectedRoute>
               } />

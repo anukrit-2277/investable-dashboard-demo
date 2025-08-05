@@ -28,7 +28,7 @@ const CompanyDashboard = () => {
         <div className="flex flex-col items-center justify-center h-[50vh]">
           <h1 className="text-2xl font-bold mb-2">Company Not Found</h1>
           <p className="text-muted-foreground mb-4">The company you're looking for doesn't exist.</p>
-          <a href="/" className="text-primary hover:underline">
+          <a href="/home" className="text-primary hover:underline">
             Return to Homepage
           </a>
         </div>
@@ -61,7 +61,7 @@ const CompanyDashboard = () => {
       <DashboardHeader 
         title={company.name} 
         subtitle="Investment Readiness Analysis"
-        backLink="/"
+        backLink="/home"
         score={company.macroScore}
         onExport={handleExportReport}
         isExporting={isExporting}

@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Calendar, Mail, Users, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUser } from '@/context/UserContext';
 
 const ComingSoon = () => {
   const navigate = useNavigate();
+  const { userType } = useUser();
 
   const features = [
     {
@@ -107,7 +109,7 @@ const ComingSoon = () => {
                   size="lg"
                   onClick={() => navigate('/home')}
                 >
-                  Explore as Investor
+                  Explore Dashboard
                 </Button>
               </div>
             </CardContent>
