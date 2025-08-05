@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
   ACCESS_REQUESTS: `${API_BASE_URL}/api/access-requests`,
   ACCESS_REQUEST_BY_ID: (id: string) => `${API_BASE_URL}/api/access-requests/${id}`,
   ACCESS_REQUESTS_BY_INVESTOR: (email: string) => `${API_BASE_URL}/api/access-requests/investor/${email}`,
+  MIGRATE_COMPANY_NAMES: `${API_BASE_URL}/api/access-requests/migrate-company-names`,
 };
 
 export default API_BASE_URL; 

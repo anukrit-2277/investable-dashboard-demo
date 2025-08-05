@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Clock, 
   CheckCircle, 
@@ -11,7 +12,9 @@ import {
   Users, 
   Building2,
   TrendingUp,
-  Activity
+  Activity,
+  History,
+  FileText
 } from 'lucide-react';
 import UserProfile from '@/components/UserProfile';
 import { API_ENDPOINTS } from '../config/api';
@@ -19,6 +22,7 @@ import { API_ENDPOINTS } from '../config/api';
 interface AccessRequest {
   _id: string;
   companyId: string;
+  companyName: string;
   investorEmail: string;
   investorName: string;
   status: 'pending' | 'approved' | 'denied';
@@ -65,6 +69,21 @@ export default function AdminPage() {
     }
   };
 
+  const handleMigrateCompanyNames = async () => {
+    try {
+      const res = await fetch(API_ENDPOINTS.MIGRATE_COMPANY_NAMES, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to migrate company names');
+      alert(`Successfully updated ${data.updatedCount} requests with company names`);
+      fetchRequests(); // Refresh the data
+    } catch (err) {
+      alert('Error: ' + (err instanceof Error ? err.message : 'Failed to migrate company names'));
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
@@ -108,7 +127,17 @@ export default function AdminPage() {
               <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
               <p className="text-muted-foreground">Manage access requests and system overview</p>
             </div>
-            <UserProfile />
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleMigrateCompanyNames}
+                className="text-xs"
+              >
+                Migrate Company Names
+              </Button>
+              <UserProfile />
+            </div>
           </div>
         </div>
       </div>
@@ -161,7 +190,7 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        {/* Access Requests */}
+        {/* Access Requests with Tabs */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -186,56 +215,115 @@ export default function AdminPage() {
                 <p className="text-muted-foreground">No access requests found.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {requests.map((req, index) => (
-                  <div key={req._id}>
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 bg-muted rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(req.status)}
-                            {getStatusBadge(req.status)}
+              <Tabs defaultValue="current" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="current" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Current ({requests.filter(r => r.status === 'pending').length})
+                  </TabsTrigger>
+                  <TabsTrigger value="history" className="flex items-center gap-2">
+                    <History className="h-4 w-4" />
+                    History ({requests.filter(r => r.status !== 'pending').length})
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="current" className="mt-6">
+                  <div className="space-y-4">
+                    {requests.filter(req => req.status === 'pending').map((req, index) => (
+                      <div key={req._id}>
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 bg-muted rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(req.status)}
+                                {getStatusBadge(req.status)}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <p className="font-medium text-foreground">{req.investorName}</p>
+                                <p className="text-sm text-muted-foreground">{req.investorEmail}</p>
+                                <p className="text-sm text-primary font-medium">{req.companyName}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Company ID: <span className="font-mono">{req.companyId}</span></p>
+                                <p className="text-sm text-muted-foreground">
+                                  Requested: {new Date(req.createdAt).toLocaleDateString()} at {new Date(req.createdAt).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleAction(req._id, 'approved')}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive" 
+                              onClick={() => handleAction(req._id, 'denied')}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Deny
+                            </Button>
                           </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="font-medium text-foreground">{req.investorName}</p>
-                            <p className="text-sm text-muted-foreground">{req.investorEmail}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Company ID: <span className="font-mono">{req.companyId}</span></p>
-                            <p className="text-sm text-muted-foreground">
-                              Requested: {new Date(req.createdAt).toLocaleDateString()} at {new Date(req.createdAt).toLocaleTimeString()}
-                            </p>
-                          </div>
-                        </div>
+                        {index < requests.filter(r => r.status === 'pending').length - 1 && <Separator className="my-4" />}
                       </div>
-                      
-                      {req.status === 'pending' && (
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleAction(req._id, 'approved')}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="destructive" 
-                            onClick={() => handleAction(req._id, 'denied')}
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Deny
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    {index < requests.length - 1 && <Separator className="my-4" />}
+                    ))}
+                    {requests.filter(req => req.status === 'pending').length === 0 && (
+                      <div className="text-center py-8">
+                        <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-muted-foreground">No pending requests</p>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                </TabsContent>
+                
+                <TabsContent value="history" className="mt-6">
+                  <div className="space-y-4">
+                    {requests.filter(req => req.status !== 'pending').map((req, index) => (
+                      <div key={req._id}>
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-4 bg-muted rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(req.status)}
+                                {getStatusBadge(req.status)}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <p className="font-medium text-foreground">{req.investorName}</p>
+                                <p className="text-sm text-muted-foreground">{req.investorEmail}</p>
+                                <p className="text-sm text-primary font-medium">{req.companyName}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Company ID: <span className="font-mono">{req.companyId}</span></p>
+                                <p className="text-sm text-muted-foreground">
+                                  {req.status === 'approved' ? 'Approved' : 'Denied'}: {new Date(req.createdAt).toLocaleDateString()} at {new Date(req.createdAt).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        {index < requests.filter(r => r.status !== 'pending').length - 1 && <Separator className="my-4" />}
+                      </div>
+                    ))}
+                    {requests.filter(req => req.status !== 'pending').length === 0 && (
+                      <div className="text-center py-8">
+                        <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-muted-foreground">No historical requests</p>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
             )}
           </CardContent>
         </Card>

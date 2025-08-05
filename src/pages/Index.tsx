@@ -2,16 +2,21 @@
 import { useState, useEffect } from 'react';
 import { sampleCompanies } from '@/data/companyData';
 import CompanyCard from '@/components/CompanyCard';
-import { Search, ChevronDown, TrendingUp, Users, BarChart3, Shield } from 'lucide-react';
+import { Search, ChevronDown, TrendingUp, Users, BarChart3, Shield, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUser } from '@/context/UserContext';
 import UserProfile from '@/components/UserProfile';
+import { exportReportSimple } from '@/utils/pdfExportSimple';
+import { getApprovedCompanies } from '@/utils/accessUtils';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredCompanies, setFilteredCompanies] = useState(sampleCompanies);
+  const [isExporting, setIsExporting] = useState(false);
   const { userType, email } = useUser();
+  const { toast } = useToast();
   
   // Filter companies based on search term
   useEffect(() => {
@@ -24,6 +29,73 @@ const Index = () => {
       setFilteredCompanies(filtered);
     }
   }, [searchTerm]);
+
+  // Handle export report - only export approved companies
+  const handleExportReport = async () => {
+    setIsExporting(true);
+    
+    try {
+      let exportableCompanies = filteredCompanies;
+      
+      if (userType === 'investor') {
+        // For investors, only export companies they have approved access to
+        if (!email) {
+          toast({
+            title: "Export Failed",
+            description: "Please log in to export reports.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        const approvedCompanies = await getApprovedCompanies(email, filteredCompanies);
+        
+        if (approvedCompanies.length === 0) {
+          toast({
+            title: "No Approved Companies",
+            description: "You don't have access to any companies yet. Please request access first.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        exportableCompanies = approvedCompanies;
+        
+        toast({
+          title: "Exporting Approved Companies",
+          description: `Exporting ${approvedCompanies.length} companies you have access to.`,
+        });
+      }
+      
+      if (exportableCompanies.length === 0) {
+        toast({
+          title: "No data to export",
+          description: "Please search for companies first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await exportReportSimple({
+        companies: exportableCompanies,
+        searchTerm: searchTerm || undefined,
+      });
+      
+      toast({
+        title: "Report exported successfully!",
+        description: `PDF report with ${exportableCompanies.length} companies has been downloaded.`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export failed",
+        description: "There was an error generating the PDF report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
@@ -91,9 +163,25 @@ const Index = () => {
               <ChevronDown size={16} className="mr-2" />
               Filter
             </Button>
-            <Button size="sm" className="shadow-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-              Export Report
+            <Button 
+              size="sm" 
+              className="shadow-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              onClick={handleExportReport}
+              disabled={isExporting}
+            >
+              {isExporting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download size={16} className="mr-2" />
+                  {userType === 'investor' ? 'Export Approved' : 'Export Report'}
+                </>
+              )}
             </Button>
+
           </div>
         </div>
         

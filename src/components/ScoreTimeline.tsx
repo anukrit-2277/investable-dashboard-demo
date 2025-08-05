@@ -23,11 +23,11 @@ const ScoreTimeline: React.FC<ScoreTimelineProps> = ({ history, className = '' }
     if (active && payload && payload.length) {
       const entry = payload[0].payload as (ScoreHistoryEntry & { formattedDate: string });
       return (
-        <div className="bg-white p-3 shadow-md rounded-md border">
-          <p className="font-medium">{entry.formattedDate}</p>
-          <p className="text-sm">Score: <span className={getScoreColorClass(entry.score)}>{entry.score}</span></p>
+        <div className="bg-card border border-border p-3 shadow-md rounded-md">
+          <p className="font-medium text-foreground">{entry.formattedDate}</p>
+          <p className="text-sm text-foreground">Score: <span className={getScoreColorClass(entry.score)}>{entry.score}</span></p>
           {entry.changes && (
-            <p className="text-sm mt-1 max-w-xs">Note: {entry.changes}</p>
+            <p className="text-sm mt-1 max-w-xs text-muted-foreground">Note: {entry.changes}</p>
           )}
         </div>
       );
@@ -45,14 +45,14 @@ const ScoreTimeline: React.FC<ScoreTimelineProps> = ({ history, className = '' }
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 dataKey="date"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
               />
               <YAxis 
                 domain={[Math.floor(Math.min(...data.map(d => d.score)) - 5), 100]} 
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                 width={40}
               />
               <Tooltip content={<CustomTooltip />} />
@@ -67,13 +67,13 @@ const ScoreTimeline: React.FC<ScoreTimelineProps> = ({ history, className = '' }
                   stroke: '#0369a1',
                   strokeWidth: 2,
                   r: 4,
-                  fill: 'white'
+                  fill: 'hsl(var(--card))'
                 }}
                 activeDot={{ 
                   stroke: '#0369a1',
                   strokeWidth: 2, 
                   r: 6,
-                  fill: 'white'
+                  fill: 'hsl(var(--card))'
                 }}
               />
               {/* Special dots for entries with change notes */}

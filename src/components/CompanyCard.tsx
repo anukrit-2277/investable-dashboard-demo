@@ -7,8 +7,10 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { useUser } from '../context/UserContext';
 import { Button } from './ui/button';
-import { Lock, Eye, EyeOff, BarChart3 } from 'lucide-react';
+import { Lock, Eye, EyeOff, BarChart3, Download } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
+import { exportCompanyReportSimple } from '@/utils/pdfExportSimple';
+import { useToast } from '@/hooks/use-toast';
 
 interface CompanyCardProps {
   company: Company;
@@ -18,6 +20,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
   const navigate = useNavigate();
   const lastUpdatedDate = new Date(company.lastUpdated);
   const { userType, email, name, isLoading } = useUser();
+  const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -25,6 +28,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
 
   const [accessStatus, setAccessStatus] = useState<'pending' | 'approved' | 'denied' | null>(null);
   const [isLoadingStatus, setIsLoadingStatus] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
 
 
@@ -173,6 +177,38 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
     }
   };
 
+  const handleExportCompanyReport = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Check if user has access to this company
+    if (userType === 'investor' && accessStatus !== 'approved') {
+      toast({
+        title: "Access Required",
+        description: "You need approved access to export this company's report.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsExporting(true);
+    try {
+      await exportCompanyReportSimple(company);
+      toast({
+        title: "Company report exported!",
+        description: `PDF report for ${company.name} has been downloaded.`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export failed",
+        description: "There was an error generating the company report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -182,7 +218,12 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
       const res = await fetch(API_ENDPOINTS.ACCESS_REQUESTS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companyId: company.id, investorEmail: email, investorName: name })
+        body: JSON.stringify({ 
+          companyId: company.id, 
+          companyName: company.name,
+          investorEmail: email, 
+          investorName: name 
+        })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Request failed');
@@ -225,6 +266,11 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
               {shouldBlur && (
                 <span className="ml-2 text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
                   🔒 Restricted
+                </span>
+              )}
+              {userType === 'investor' && accessStatus === 'approved' && (
+                <span className="ml-2 text-xs text-green-600 bg-green-950/20 px-2 py-1 rounded-full">
+                  ✓ Approved
                 </span>
               )}
             </p>
@@ -275,10 +321,28 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
           </div>
           
           <div className="flex justify-between items-center pt-2">
-            <span className="text-xs font-medium text-primary flex items-center">
-              <Eye className="w-3 h-3 mr-1" />
-              View details →
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-primary flex items-center">
+                <Eye className="w-3 h-3 mr-1" />
+                View details →
+              </span>
+              {/* Show export button for non-investors or investors with approved access */}
+              {(userType !== 'investor' || accessStatus === 'approved') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleExportCompanyReport}
+                  disabled={isExporting}
+                  className="h-6 px-2 text-xs"
+                >
+                  {isExporting ? (
+                    <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Download className="w-3 h-3" />
+                  )}
+                </Button>
+              )}
+            </div>
             
             {userType === 'investor' && (
               <>

@@ -41,10 +41,17 @@ const ScoreRadarChart: React.FC<ScoreRadarChartProps> = ({ company, className = 
         <div className="h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart outerRadius={90} data={data}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="category" tick={{ fontSize: 10 }} />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} />
-              <Tooltip />
+              <PolarGrid stroke="hsl(var(--border))" />
+              <PolarAngleAxis dataKey="category" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+              <Tooltip 
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '6px',
+                  color: 'hsl(var(--foreground))'
+                }}
+              />
               <Radar
                 name="People"
                 dataKey="people"

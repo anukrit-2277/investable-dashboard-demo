@@ -9,10 +9,14 @@ import ScoreRadarChart from '@/components/ScoreRadarChart';
 import PillarBreakdown from '@/components/PillarBreakdown';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
+import { exportCompanyReportSimple } from '@/utils/pdfExportSimple';
+import { useToast } from '@/hooks/use-toast';
 
 const CompanyDashboard = () => {
   const { id } = useParams<{ id: string }>();
   const [selectedPillar, setSelectedPillar] = useState<Pillar>('people');
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
   
   // Find the company by ID
   const company = sampleCompanies.find(c => c.id === id);
@@ -32,6 +36,26 @@ const CompanyDashboard = () => {
     );
   }
 
+  const handleExportReport = async () => {
+    setIsExporting(true);
+    try {
+      await exportCompanyReportSimple(company);
+      toast({
+        title: "Company report exported!",
+        description: `Detailed PDF report for ${company.name} has been downloaded.`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export failed",
+        description: "There was an error generating the company report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="container max-w-7xl py-6">
       <DashboardHeader 
@@ -39,6 +63,8 @@ const CompanyDashboard = () => {
         subtitle="Investment Readiness Analysis"
         backLink="/"
         score={company.macroScore}
+        onExport={handleExportReport}
+        isExporting={isExporting}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
